@@ -51,15 +51,20 @@
 //END CONFIGURATION
 
 #if defined(USE_APA102) || defined(USE_WS2801) || defined(USE_LPD8806) || defined(USE_P9813)
- #ifndef CLKPIN
-  #define CLKPIN 0
- #endif
- #ifndef DATAPIN
-  #define DATAPIN 2
- #endif
- #if BTNPIN == CLKPIN || BTNPIN == DATAPIN
-  #undef BTNPIN   // Deactivate button pin if it conflicts with one of the APA102 pins.
- #endif
+  #ifdef ARDUINO_ARCH_ESP32
+    #ifndef MISOPIN
+      #define MISOPIN 12
+    #endif
+    #ifndef CSPIN
+      #define CSPIN 15
+    #endif
+  #endif
+  #ifndef CLKPIN
+   #define CLKPIN 14
+  #endif
+  #ifndef DATAPIN
+   #define DATAPIN 13
+  #endif
 #endif
 
 #ifdef WLED_USE_ANALOG_LEDS
@@ -117,30 +122,30 @@
 //automatically uses the right driver method for each platform
 #ifdef ARDUINO_ARCH_ESP32
  #ifdef USE_APA102
-  #define PIXELMETHOD DotStarMethod
+  #define PIXELMETHOD DotStarSpiMethod
  #elif defined(USE_WS2801)
-  #define PIXELMETHOD NeoWs2801Method
+  #define PIXELMETHOD NeoWs2801SpiMethod
  #elif defined(USE_LPD8806)
-  #define PIXELMETHOD Lpd8806Method
+  #define PIXELMETHOD Lpd8806SpiMethod
  #elif defined(USE_TM1814)
-  #define PIXELMETHOD NeoTm1814Method  
+  #define PIXELMETHOD NeoTm1814SpiMethod  
  #elif defined(USE_P9813)
-  #define PIXELMETHOD P9813Method  
+  #define PIXELMETHOD P9813SpiMethod  
  #else
   #define PIXELMETHOD NeoEsp32Rmt0Ws2812xMethod
  #endif
 #else //esp8266
  //autoselect the right method depending on strip pin
  #ifdef USE_APA102
-  #define PIXELMETHOD DotStarMethod
+  #define PIXELMETHOD DotStarSpiMethod
  #elif defined(USE_WS2801)
-  #define PIXELMETHOD NeoWs2801Method
+  #define PIXELMETHOD NeoWs2801SpiMethod
  #elif defined(USE_LPD8806)
-  #define PIXELMETHOD Lpd8806Method
+  #define PIXELMETHOD Lpd8806SpiMethod
  #elif defined(USE_TM1814)
-  #define PIXELMETHOD NeoTm1814Method  
+  #define PIXELMETHOD NeoTm1814SpiMethod  
  #elif defined(USE_P9813)
-  #define PIXELMETHOD P9813Method  
+  #define PIXELMETHOD P9813SpiMethod  
  #elif LEDPIN == 2
   #define PIXELMETHOD NeoEsp8266Uart1Ws2813Method //if you get an error here, try to change to NeoEsp8266UartWs2813Method or update Neopixelbus
  #elif LEDPIN == 3
@@ -212,19 +217,29 @@ public:
       case NeoPixelType_Grb:
       #if defined(USE_APA102) || defined(USE_WS2801) || defined(USE_LPD8806) || defined(USE_P9813)
         _pGrb = new NeoPixelBrightnessBus<PIXELFEATURE3,PIXELMETHOD>(countPixels, CLKPIN, DATAPIN);
+       #ifdef ARDUINO_ARCH_ESP32
+        _pGrb->Begin(CLKPIN, MISOPIN, DATAPIN, CSPIN);
+       #else
+        _pGrb->Begin();
+       #endif
       #else
         _pGrb = new NeoPixelBrightnessBus<PIXELFEATURE3,PIXELMETHOD>(countPixels, LEDPIN);
-      #endif
         _pGrb->Begin();
+      #endif
       break;
 
       case NeoPixelType_Grbw:
       #if defined(USE_APA102) || defined(USE_WS2801) || defined(USE_LPD8806) || defined(USE_P9813)
         _pGrbw = new NeoPixelBrightnessBus<PIXELFEATURE4,PIXELMETHOD>(countPixels, CLKPIN, DATAPIN);
+       #ifdef ARDUINO_ARCH_ESP32
+        _pGrbw->Begin(CLKPIN, MISOPIN, DATAPIN, CSPIN);
+       #else
+        _pGrbw->Begin();
+       #endif
       #else
         _pGrbw = new NeoPixelBrightnessBus<PIXELFEATURE4,PIXELMETHOD>(countPixels, LEDPIN);
-      #endif
         _pGrbw->Begin();
+      #endif
       break;
     }
 
